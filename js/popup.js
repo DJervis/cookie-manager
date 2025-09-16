@@ -6,9 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultDiv = document.getElementById('result');
   let resultList = []
 
-  chrome.storage.local.get(['cookieName'], (res) => {
-    if(res && res.cookieName) {
-      nameInput.value = res.cookieName;
+  chrome.storage.local.get(['cookieName','cookieResult'], (res) => {
+    if(res) {
+      if(res.cookieName) nameInput.value = res.cookieName;
+      if(res.cookieResult) {
+        resultList = res.cookieResult;
+        renderResult();
+      }
     }
   });
   
@@ -60,11 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setTimeout(() => {
-      resultDiv.innerHTML = '';
-      resultList.forEach(item => {
-        let str = `${item.name}: ${item.value} <br>`
-        resultDiv.innerHTML += str;
-      })
+      renderResult()
     }, 1000);
 
     
@@ -103,4 +103,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     
   });
+
+
+  // 渲染结果
+  function renderResult() {
+    resultDiv.innerHTML = '';
+    resultList.forEach(item => {
+      let str = `${item.name}: ${item.value} <br>`
+      resultDiv.innerHTML += str;
+      chrome.storage.local.set({cookieResult: resultList})
+    })
+  }
 });
