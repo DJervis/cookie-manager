@@ -6,15 +6,21 @@
 </head>
 <body>
   <h3>Cookie Manager</h3>
-  <input type="text" id="cookieName" placeholder="Cookie 名称（例如：username,age）" />
+  <div class="type-list">
+    <div class="type-item" data-type="cookie">Cookie</div>
+    <div class="type-item" data-type="local">Local Storage</div>
+    <div class="type-item" data-type="session">Session Storage</div>
+  </div>
+  <input type="text" id="cookieName" placeholder="名称（例如：username,age / all）" />
   <!-- <input type="text" id="cookieValue" placeholder="Cookie 值（设置时填写）" /> -->
-  <button id="getCookie">🔍 获取 Cookie</button>
-  <button id="setCookie">✅ 设置 Cookie</button>
+  <button id="getCookie">🔍 获取</button>
+  <button id="setCookie">✅ 设置</button>
   <div id="result">
     <p class="result-title">操作结果将显示在这里</p>
     <div class="result-content"></div>
   </div>
 
+  <script src="js/jquery-3.7.1.min.js"></script>
   <script src="js/popup.js"></script>
 </body>
 </html>
