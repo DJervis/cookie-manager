@@ -3,15 +3,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const valueInput = document.getElementById('cookieValue');
   const getBtn = document.getElementById('getCookie');
   const setBtn = document.getElementById('setCookie');
-  const resultDiv = document.getElementById('result');
+  const resultDiv = document.querySelector('.result-content');
+  const resultTitle = document.querySelector('.result-title');
   let resultList = []
 
   chrome.storage.local.get(['cookieName','cookieResult'], (res) => {
     if(res) {
       if(res.cookieName) nameInput.value = res.cookieName;
       if(res.cookieResult) {
+        resultTitle.textContent = '已缓存cookies';
         resultList = res.cookieResult;
-        renderResult();
+        renderResult(resultList);
       }
     }
   });
@@ -35,38 +37,42 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.set({cookieName: name})
 
     if (!name) {
-      resultDiv.textContent = '❌ 请输入 Cookie 名称';
+      resultTitle.textContent = '❌ 请输入 Cookie 名称';
       return;
     }
 
     const names = name.split(',');
+    const funList = names.map(name => {
+      return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({
+          action: 'getCookie',
+          name,
+          url
+        }, (value) => {
+          if (chrome.runtime.lastError) {
+            // resultList.push({name, value:'错误', err: true})
+            resolve({name, value:'错误', err: true})
+          } else if (value === null || value === undefined) {
+            // resultList.push({name, value:'未找到', err: true})
+            resolve({name, value:'未找到', err: true})
+          } else {
+            // resultList.push({name, value})
+            resolve({name, value})
+          }
+        });
+      })
+    })
 
-    resultDiv.textContent = '🔍 查询中...';
+    resultTitle.textContent = '🔍 查询中...';
     resultList = [];
-    
-    for(let name of names) {
-      chrome.runtime.sendMessage({
-        action: 'getCookie',
-        name,
-        url
-      }, (value) => {
-        if (chrome.runtime.lastError) {
-          // resultDiv.textContent = '❌ 错误: ' + chrome.runtime.lastError.message;
-          resultList.push({name, value:'错误', err: true})
-        } else if (value === null || value === undefined) {
-          // resultDiv.textContent = '📭 未找到名为 "' + name + '" 的 Cookie';
-          resultList.push({name, value:'未找到', err: true})
-        } else {
-          // resultDiv.textContent = '✅ 值: ' + value;
-          resultList.push({name, value})
-        }
-      });
-    }
 
-    setTimeout(() => {
-      renderResult()
-    }, 1000);
-
+    Promise.all(funList).then(res => {
+      console.log("🚀 => res:", res)
+      resultTitle.textContent = '🔍 查询完成';
+      resultList = res;
+      renderResult(resultList)
+      chrome.storage.local.set({cookieResult: resultList})
+    })
     
   });
 
@@ -82,36 +88,58 @@ document.addEventListener('DOMContentLoaded', () => {
     //   return;
     // }
 
-    resultDiv.textContent = '⚙️ 设置中...';
+    resultTitle.textContent = '⚙️ 设置中...';
 
-    resultList.map(item => {
-      if(item.err) return false;
-      chrome.runtime.sendMessage({
-        action: 'setCookie',
-        name: item.name,
-        value: item.value,
-        url
-      }, () => {
-        resultDiv.textContent = '';
-        if (chrome.runtime.lastError) {
-          resultDiv.textContent += '❌ 失败: ' + chrome.runtime.lastError.message;
-        } else {
-          resultDiv.textContent += `✅ 成功设置 Cookie: ${name} = ${value}`;
-        }
-      });
+    const funList = resultList.filter(v => !v.err).map(item => {
+      return new Promise((resolve,reject) => {
+        chrome.runtime.sendMessage({
+          action: 'setCookie',
+          name: item.name,
+          value: item.value,
+          url
+        }, () => {
+          if (chrome.runtime.lastError) {
+            resolve({name:item.name, value: '❌ 失败: ' + chrome.runtime.lastError.message})
+          } else {
+            resolve({name:item.name, value: '✅ 成功设置'})
+          }
+        });
+      })
     })
 
-    
+    if(funList.length) {
+      Promise.all(funList).then(res => {
+        resultTitle.textContent = '⚙️ 设置完成';
+        renderResult(res)
+      })
+    } else {
+      resultTitle.textContent = '无可用cookie';
+      resultDiv.innerHTML = '';
+    }
+
   });
 
 
   // 渲染结果
-  function renderResult() {
+  function renderResult(resultList) {
     resultDiv.innerHTML = '';
-    resultList.forEach(item => {
-      let str = `${item.name}: ${item.value} <br>`
-      resultDiv.innerHTML += str;
-      chrome.storage.local.set({cookieResult: resultList})
+
+    let list = resultList.map(item => {
+      let str = `<div class="res-item">
+        <span class="name">${item.name}</span>
+        <span class="value">${item.value}</span>
+      </div>`
+      return str
     })
+    let html = `<div class="list">
+      <div class="res-item res-th">
+        <span class="name">Name</span>
+        <span class="value">Value</span>
+      </div>
+      ${list.join('')}
+    </div>`;
+
+    resultDiv.innerHTML = html;
   }
+
 });
