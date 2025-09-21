@@ -69,9 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
       let allList = [];
       resultList.forEach(item => {
         if(item.name==='all') {
-          if(item.value.all) {
-            for(let p in item.value.all) {
-              allList.push({name: p, value: item.value.all[p]})
+          if(item.all) {
+            for(let p in item.all) {
+              allList.push({name: p, value: item.all[p]})
             }
           } else if(item.value && item.value.length) {
             allList = item.value.map(v => ({name:v.name, value:v.value}));
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderResult(res)
       })
     } else {
-      resultTitle.textContent = '无可用cookie';
+      resultTitle.textContent = '无可用数据';
       resultDiv.innerHTML = '';
     }
 
@@ -194,15 +194,15 @@ document.addEventListener('DOMContentLoaded', () => {
             action: action,
             name: name=='all' ? null : name,
             url
-          }, (value) => {
+          }, (res) => {
+            console.log('getFunList--', res);
             if (chrome.runtime.lastError) {
               console.log(`${action}-${name}`, chrome.runtime.lastError.message);
               resolve({name, value:'错误', err: true})
-            } else if (value === null || value === undefined) {
-              // resultList.push({name, value:'未找到', err: true})
+            } else if (res.value === null || res.value === undefined) {
               resolve({name, value:'未找到', err: true})
             } else {
-              resolve({name, value})
+              resolve(res)
             }
           });
         })

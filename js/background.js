@@ -29,7 +29,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (chrome.runtime.lastError) {
         sendResponse(null);
       } else {
-        sendResponse(cookie ? cookie.value : null);
+        sendResponse({name, value: cookie ? cookie.value : null});
       }
     });
   }
@@ -55,7 +55,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'getAllCookies') {
     const { url } = request;
     chrome.cookies.getAll({ url }, (cookies) => {
-      sendResponse(cookies);
+      sendResponse({
+        type: 'cookie',
+        name: 'all',
+        value: cookies,
+      });
     });
   }
 

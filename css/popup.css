@@ -100,3 +100,12 @@ button:hover {
 .type-item:first-child {
   border-left: 0;
 }
+
+.btn-wp {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.btn-wp button {
+  width: 45%;
+}

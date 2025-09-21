@@ -28,6 +28,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
       sendResponse({
         type,
+        name: 'all',
+        value: 'all',
         all: items
       });
     }
